@@ -147,6 +147,7 @@ _generated/
 .mypy_cache
 
 # npm compilation
+parlai/crowdsourcing/**/package-lock.json
 crowdsourcing/**/package-lock.json
 
 # our own 
