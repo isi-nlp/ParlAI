@@ -30,8 +30,12 @@ class InferenceGuidedDialogueTeacher(DialogTeacher):
         self.id = "inf_dial"
         self.datatype = opt['datatype']
         dpath = build(opt)
-        opt['datafile'] = Path(dpath) / "batch_1_prompt_valid.json"
+        if opt['datatype'].startswith("test"):
+            opt['datafile'] = Path(dpath) / "all_test_responses.json"
+        else:
+            opt['datafile'] = Path(dpath) / "all_train_responses.json"
         self.generation_target = opt.get("generation_target")
+        self.no_special_tokens = opt.get("no_special_tokens")
 
         super().__init__(opt, shared)
 
@@ -48,6 +52,13 @@ class InferenceGuidedDialogueTeacher(DialogTeacher):
             default="response",
             choices=['response', 'infq_aresponse', 'infqa_response'],
             help='Targets to use for generation. Refer to README for more information: parlai/tasks/inference_guided_dialogue/README.md',
+        )
+
+        agent.add_argument(
+            '-nosp',
+            '--no_special_tokens',
+            action="store_true",
+            help="Don't use any special tokens such as <speaker1> etc.",
         )
 
         return parser
@@ -67,29 +78,37 @@ class InferenceGuidedDialogueTeacher(DialogTeacher):
         with open(path, "r") as f:
             data_ = json.load(f)
 
-        random.seed(42)
-        random.shuffle(data_)
-
+        pct90_index = int(len(data_) * 9 / 10)
         # use 9:1 split
         if self.opt['datatype'].startswith("train"):
-            pct90_index = int(len(data_) * 9 / 10)
             data_ = data_[:pct90_index]
-        else:
+            random.shuffle(data_)
+
+        elif self.opt['datatype'].startswith("valid"):
             data_ = data_[pct90_index:]
 
         processed_data = []
         for d in data_:
             dial_hist = d['utterance']
             question, answer = split_qa(d["triple_NL"])
-            response = d['response']
+            question, answer = question.strip(), answer.strip()
+            response = d['response'].strip()
 
             processed = []
             for idx, turn in enumerate(dial_hist):
-                speaker_label = "<speaker2>" if idx % 2 else "<speaker1>"
-                processed.append(f"{speaker_label} {turn}")
+                turn = turn.strip()
+                if self.no_special_tokens:
+                    processed.append(turn)
+                else:
+                    speaker_label = "<speaker2>" if idx % 2 else "<speaker1>"
+                    processed.append(f"{speaker_label} {turn}")
 
-            processed_inf_q = f"<infq> {question}"
-            processed_inf_a = f"<infa> {answer}"
+            if self.no_special_tokens:
+                processed_inf_q = question
+                processed_inf_a = answer
+            else:
+                processed_inf_q = f"<infq> {question}"
+                processed_inf_a = f"<infa> {answer}"
 
             # add question generation
             if self.generation_target == "infqa_response":
@@ -107,7 +126,8 @@ class InferenceGuidedDialogueTeacher(DialogTeacher):
                 processed_data.append((input_text, output_text, new_episode))
 
             # default: response generation only
-            input_text = '\n'.join(processed + [processed_inf_q, processed_inf_a])
+            # input_text = '\n'.join(processed + [processed_inf_q, processed_inf_a])
+            input_text = '\n'.join(processed)
             output_text = [response]  # provide as list of candidates
             new_episode = True
 
