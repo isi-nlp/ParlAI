@@ -93,6 +93,9 @@ class InferenceGuidedDialogueTeacher(DialogTeacher):
             question, answer = split_qa(d["triple_NL"])
             question, answer = question.strip(), answer.strip()
             response = d['response'].strip()
+            if not self.no_special_tokens:
+                speaker_label = "<speaker2>" if len(dial_hist) % 2 else "<speaker1>"
+                response = f"{speaker_label} {response}"
 
             processed = []
             for idx, turn in enumerate(dial_hist):
@@ -110,26 +113,28 @@ class InferenceGuidedDialogueTeacher(DialogTeacher):
                 processed_inf_q = f"<infq> {question}"
                 processed_inf_a = f"<infa> {answer}"
 
-            # add question generation
-            if self.generation_target == "infqa_response":
+            if self.generation_target == "response":
                 input_text = '\n'.join(processed)
-                output_text = [processed_inf_q]
+                output_text = [response]  # provide as list of candidates
                 new_episode = True
-                processed_data.append((input_text, output_text, new_episode))
+            else:
+                # add question generation
+                if self.generation_target == "infqa_response":
+                    input_text = '\n'.join(processed)
+                    output_text = [processed_inf_q]
+                    new_episode = True
+                    processed_data.append((input_text, output_text, new_episode))
 
-            # add question answer generation
-            if self.generation_target in ["infq_aresponse", "infqa_response"]:
-                input_text = '\n'.join(processed + [processed_inf_q])
-                output_text = [processed_inf_a]  # provide as list of candidates
+                # add question answer generation
+                if self.generation_target in ["infq_aresponse", "infqa_response"]:
+                    input_text = '\n'.join(processed + [processed_inf_q])
+                    output_text = [processed_inf_a]  # provide as list of candidates
+                    new_episode = True
+
+                processed_data.append((input_text, output_text, new_episode))
+                input_text = '\n'.join(processed + [processed_inf_q, processed_inf_a])
+                output_text = [response]  # provide as list of candidates
                 new_episode = True
-
-                processed_data.append((input_text, output_text, new_episode))
-
-            # default: response generation only
-            # input_text = '\n'.join(processed + [processed_inf_q, processed_inf_a])
-            input_text = '\n'.join(processed)
-            output_text = [response]  # provide as list of candidates
-            new_episode = True
 
             processed_data.append((input_text, output_text, new_episode))
 
