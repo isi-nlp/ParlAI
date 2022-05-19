@@ -36,6 +36,7 @@ class InferenceGuidedDialogueTeacher(DialogTeacher):
             opt['datafile'] = Path(dpath) / "all_train_responses.json"
         self.generation_target = opt.get("generation_target")
         self.no_special_tokens = opt.get("no_special_tokens")
+        self.generate_full_sequence = opt.get("generate_full_sequence")
 
         super().__init__(opt, shared)
 
@@ -59,6 +60,13 @@ class InferenceGuidedDialogueTeacher(DialogTeacher):
             '--no_special_tokens',
             action="store_true",
             help="Don't use any special tokens such as <speaker1> etc.",
+        )
+
+        agent.add_argument(
+            '-gf',
+            '--generate_full_sequence',
+            action="store_true",
+            help="Generate the full sequence of question-answer-response instead of generating at each separate turn.",
         )
 
         return parser
@@ -113,30 +121,55 @@ class InferenceGuidedDialogueTeacher(DialogTeacher):
                 processed_inf_q = f"<infq> {question}"
                 processed_inf_a = f"<infa> {answer}"
 
+            # default: generate only the response
             if self.generation_target == "response":
                 input_text = '\n'.join(processed)
                 output_text = [response]  # provide as list of candidates
                 new_episode = True
+                processed_data.append((input_text, output_text, new_episode))
+
             else:
-                # add question generation
-                if self.generation_target == "infqa_response":
-                    input_text = '\n'.join(processed)
-                    output_text = [processed_inf_q]
-                    new_episode = True
+                # generate the full sequence in one go
+                if self.generate_full_sequence:
+                    if self.generation_target == "infqa_response":
+                        input_text = '\n'.join(processed)
+                        output_text = [
+                            f"{processed_inf_q} {processed_inf_a} {response}"
+                        ]
+                        new_episode = True
+
+                    elif self.generation_target in ["infq_aresponse"]:
+                        input_text = '\n'.join(processed + [processed_inf_q])
+                        output_text = [
+                            f"{processed_inf_a} {response}"
+                        ]  # provide as list of candidates
+                        new_episode = True
+
                     processed_data.append((input_text, output_text, new_episode))
 
-                # add question answer generation
-                if self.generation_target in ["infq_aresponse", "infqa_response"]:
-                    input_text = '\n'.join(processed + [processed_inf_q])
-                    output_text = [processed_inf_a]  # provide as list of candidates
+                # generate through multiple turns
+                else:
+                    # add question generation turn
+                    if self.generation_target == "infqa_response":
+                        input_text = '\n'.join(processed)
+                        output_text = [processed_inf_q]
+                        new_episode = True
+                        processed_data.append((input_text, output_text, new_episode))
+
+                    # add question answer generation turn
+                    if self.generation_target in ["infq_aresponse", "infqa_response"]:
+                        input_text = '\n'.join(processed + [processed_inf_q])
+                        output_text = [processed_inf_a]  # provide as list of candidates
+                        new_episode = True
+                        processed_data.append((input_text, output_text, new_episode))
+
+                    # add response generation turn
+                    input_text = '\n'.join(
+                        processed + [processed_inf_q, processed_inf_a]
+                    )
+                    output_text = [response]  # provide as list of candidates
                     new_episode = True
-
-                processed_data.append((input_text, output_text, new_episode))
-                input_text = '\n'.join(processed + [processed_inf_q, processed_inf_a])
-                output_text = [response]  # provide as list of candidates
-                new_episode = True
-
-            processed_data.append((input_text, output_text, new_episode))
+                    processed_data.append((input_text, output_text, new_episode))
 
         if self.datatype == "train":
             random.shuffle(processed_data)
