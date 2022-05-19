@@ -1570,5 +1570,10 @@ task_list = [
             "arXiv": "https://arxiv.org/abs/2004.09544",
             "website": "https://justin-cho.com/spolin",
         },
+        "id": "InfGuidedDialogue",
+        "display_name": "InfGuidedDialogue",
+        "task": "inference_guided_dialogue",
+        "tags": [ "all", "commonsense" ],
+        "description": "Task which requires agents to respond with commonsense-based inference in question and answering format."
     },
 ]

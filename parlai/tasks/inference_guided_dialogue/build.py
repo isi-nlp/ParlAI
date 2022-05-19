@@ -1,7 +1,6 @@
 import parlai.core.build_data as build_data
 import os
 
-
 def build(opt):
     dpath = os.path.join(opt['datapath'], 'inference_guided_dialogue')
     version = '1'
