@@ -6,7 +6,7 @@ def build(opt):
     version = '1'
 
     if not build_data.built(dpath, version_string=version):
-        # assume alreay put in place 
+        # assume alreay put in place
 
         # Mark the data as built.
         build_data.mark_done(dpath, version_string=version)
