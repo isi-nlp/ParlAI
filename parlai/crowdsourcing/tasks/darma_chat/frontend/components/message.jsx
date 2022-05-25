@@ -77,7 +77,7 @@ function RenderChatMessage({ message, mephistoContext, appContext, idx }) {
       message={message.text}
       taskData={message.task_data}
       messageId={message.message_id}
-      checkbox={checkboxes}
+      // checkbox={checkboxes}
     />
   );
 }
