@@ -30,6 +30,7 @@ function Checkboxes({
   }
   // TODO: add support for radio input type
   let input_type = "checkbox";
+  // let input_type = "radio";
   const showLineBreaks = annotationBuckets.hasOwnProperty("show_line_breaks") ? annotationBuckets.show_line_breaks : false;
   const numBuckets = Object.keys(annotationBuckets.config).length;
   return (

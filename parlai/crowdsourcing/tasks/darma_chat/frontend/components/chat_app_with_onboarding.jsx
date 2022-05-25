@@ -222,7 +222,6 @@ function CustomOnboardingChatApp({
     return <OnboardingComponent 
       onboardingData={taskConfig.onboarding_data} 
       annotationBuckets={taskConfig.annotation_buckets} 
-      annotationQuestion={taskConfig.annotation_question} 
       onSubmit={(dat) => {
         handleMessageSend({text: '', task_data: dat});
       }} 

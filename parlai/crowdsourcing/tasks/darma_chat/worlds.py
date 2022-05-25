@@ -140,7 +140,9 @@ class BaseModelChatWorld(CrowdTaskWorld, ABC):
         self.num_turns = num_turns
 
         self.agent.agent_id = 'Speaker 1'
+        # self.agent.agent_id = ""
         self.bot.agent_id = 'Speaker 2'
+        # self.bot.agent_id = ""
 
         self.dialog = []
         self.tag = f'conversation_id {agent.mephisto_agent.db_id}'

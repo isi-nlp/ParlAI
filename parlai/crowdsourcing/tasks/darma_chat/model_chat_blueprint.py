@@ -27,7 +27,6 @@ from omegaconf import DictConfig, MISSING
 
 from parlai.crowdsourcing.tasks.darma_chat.bot_agent import TurkLikeAgent
 from parlai.crowdsourcing.tasks.darma_chat.utils import (
-    ImageStack,
     get_context_generator,
 )
 from parlai.tasks.blended_skill_talk.agents import ContextGenerator
