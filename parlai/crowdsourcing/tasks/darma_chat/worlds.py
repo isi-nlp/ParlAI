@@ -150,8 +150,9 @@ class BaseModelChatWorld(CrowdTaskWorld, ABC):
 
         self.agent.agent_id = 'Speaker 1'
         # self.agent.agent_id = ""
-        self.bot.agent_id = 'Speaker 2'
+        self.bot.agent_id = 'BOT'
         # self.bot.agent_id = ""
+        self.target_user="" 
 
         self.dialog = []
         self.tag = f'conversation_id {agent.mephisto_agent.db_id}'
@@ -200,6 +201,8 @@ class BaseModelChatWorld(CrowdTaskWorld, ABC):
             f'{self.__class__.__name__}:{self.tag}: About to act with task turn idx: {self.task_turn_idx}'
         )
         acts = [None, None]
+
+        self.agent.agent_id = self.target_user
         for idx, agent in enumerate([self.agent, self.bot]):
             if not self.chat_done:
                 acts[idx] = agent.act(timeout=self.max_resp_time)
@@ -287,6 +290,10 @@ class BaseModelChatWorld(CrowdTaskWorld, ABC):
                 return
 
             else:
+                # if idx == 1: 
+                #     user_name= "BOT" 
+                # else: 
+                #     user_name = self.target_user
                 utterance_data = {
                     'agent_idx': idx,
                     # Get rid of annotations HTML if it's the bot response
@@ -450,19 +457,20 @@ class ModelChatWorld(BaseModelChatWorld):
             dialogue = self.context_info["conversation"]
 
             # make each turn in the context be from the bot except for the target user 
-            target_user = self.context_info["target_user"]
+            self.target_user = self.context_info["target_user"]
             for idx, turn in enumerate(dialogue): 
+
                 msg = {
                     'episode_done': False,
-                    'id': self.agent.agent_id,
-                    'text': f"{turn['speaker_id']}: {turn['text']}" ,
+                    'id': turn['speaker_id'],
+                    'text': turn['text'],
                     'fake_start': True,
-                    'agent_idx': 0 if turn['speaker_id'] == target_user else 1,
+                    'agent_idx': 0 if turn['speaker_id'] == self.target_user else 1,
                 }
-                if turn["speaker_id"] == target_user: 
-                    msg['id'] = self.agent.agent_id
-                else: 
-                    msg['id'] = self.bot.agent_id
+                # if turn["speaker_id"] == self.target_user: 
+                #     msg['id'] = self.agent.agent_id
+                # else: 
+                #     msg['id'] = self.bot.agent_id
                 
                 self.dialog.append(msg)
                 self.agent.observe(validate(msg))
@@ -480,7 +488,7 @@ class ModelChatWorld(BaseModelChatWorld):
                     bot_utterance_data = {
                         'agent_idx': 1,
                         'text': first_bot_act['text'],
-                        'id': first_bot_act['id'],
+                        'id': "BOT",
                     }
                     self.dialog.append(bot_utterance_data)
         else:

@@ -12,7 +12,11 @@ import { Checkboxes } from './inputs.jsx';
 
 function MaybeCheckboxChatMessage({ isSelf, duration, agentName, message = "", checkbox = null }) {
   const floatToSide = isSelf ? "right" : "left";
-  const alertStyle = isSelf ? "alert-info" : "alert-warning";
+  let alertStyle = isSelf ? "alert-info" : "alert-warning";
+
+  if (agentName == "BOT"){
+    alertStyle = "alert-success"
+  }
 
   return (
     <div className="row" style={{ marginLeft: "0", marginRight: "0" }}>
@@ -22,6 +26,7 @@ function MaybeCheckboxChatMessage({ isSelf, duration, agentName, message = "", c
         style={{ float: floatToSide }}
       >
         <span style={{ fontSize: "16px", whiteSpace: "pre-wrap" }}>
+          {/* <span dangerouslySetInnerHTML={{ __html: message }}></span> */}
           <b>{agentName}</b>: <span dangerouslySetInnerHTML={{ __html: message }}></span>
         </span>
         {checkbox}
