@@ -11,7 +11,6 @@ mephisto:
     num_turns: 6 # reduced for now for testing
     task_model_parallel: true
     check_acceptability: false
-    include_persona: false
     conversation_start_mode: "custom" # seed with our data 
     seed_conversation_source: ${task_dir}/test_text.json
     conversations_needed_string: "blender_90M:10"
@@ -27,8 +26,8 @@ mephisto:
     allowed_concurrent: 1
     assignment_duration_in_seconds: 6000
     submission_timeout: 6000
-    max_num_concurrent_units: 0  # 0 means infinite; set this to a positive integer to limit concurrent HITs and prevent crashes
-    maximum_units_per_worker: 3
+    max_num_concurrent_units: 10  # 0 means infinite; set this to a positive integer to limit concurrent HITs and prevent crashes
+    maximum_units_per_worker: 100
     task_name: darma_chat
     task_reward: 3
     task_tags: "chat,conversation,dialog,partner"
