@@ -29,8 +29,8 @@ function Checkboxes({
     reasonComponent = '';
   }
   // TODO: add support for radio input type
-  let input_type = "checkbox";
-  // let input_type = "radio";
+  // let input_type = "checkbox";
+  let input_type = "radio";
   const showLineBreaks = annotationBuckets.hasOwnProperty("show_line_breaks") ? annotationBuckets.show_line_breaks : false;
   const numBuckets = Object.keys(annotationBuckets.config).length;
   return (
@@ -45,8 +45,20 @@ function Checkboxes({
                 name={'checkbox_group_' + turnIdx}
                 onChange={(evt) => {
                   let newVal = evt.target.checked;
+                  console.log(newVal)
                   let oldAnnotations = Object.assign({}, annotations);
                   oldAnnotations[c] = newVal;
+                  // hack: set all others as false for radio input type 
+                  if (input_type == "radio"){
+                    for (var i = 0; i < numBuckets; i++) {
+                      let k = Object.keys(annotationBuckets.config)[i]
+                      if (k==c){
+                        continue 
+                      }
+                      oldAnnotations[k] = false 
+                    } 
+                  }
+                  console.log(oldAnnotations)
                   onUpdateAnnotations(oldAnnotations);
                 }}
                 disabled={!enabled}

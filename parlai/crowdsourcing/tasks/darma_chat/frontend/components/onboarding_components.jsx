@@ -9,9 +9,9 @@
 import React from "react";
 import { ErrorBoundary } from './error_boundary.jsx';
 import { Checkboxes } from './checkboxes.jsx';
-const DEFAULT_MIN_CORRECT = 4;
-const DEFAULT_MAX_INCORRECT = 3;
-const DEFAULT_MAX_FAILURES_ALLOWED = 1;
+const DEFAULT_MIN_CORRECT = 1;
+const DEFAULT_MAX_INCORRECT = 0;
+const DEFAULT_MAX_FAILURES_ALLOWED = 5;
 var onboardingFailuresCount = 0;
 
 var renderOnboardingFail = function () {
@@ -67,7 +67,7 @@ var handleOnboardingSubmit = function ({ onboardingData, currentTurnAnnotations,
     } else {
         if (onboardingFailuresCount < max_failures_allowed) {
             onboardingFailuresCount += 1;
-            alert('You did not label the sample conversation well enough. Please try one more time!');
+            alert('If you do not agree that you have been given informed consent please do not continue with this task.');
         } else {
             renderOnboardingFail();
             onSubmit({ annotations: currentTurnAnnotations, success: false })
@@ -285,21 +285,6 @@ function OnboardingQuestion({
     annotations = null, 
     onUpdateAnnotation = null,
 }) {
-
-    var extraElements = (<span key={'extra_' + turnIdx}><br /><br />
-        <span style={{ fontStyle: 'italic' }}>
-            
-            Choose only one of the following: 
-            <br />
-            <Checkboxes 
-                annotations={annotations} 
-                onUpdateAnnotations={onUpdateAnnotation} 
-                annotationBuckets={annotationBuckets} 
-                turnIdx={turnIdx} 
-                askReason={false} 
-            />
-        </span>
-    </span>)
     
     return (
         <div className="alert alert-info" style={{ float: `${turnIdx % 2 == 0 ? "right" : "left"}`, display: 'table' }}>
