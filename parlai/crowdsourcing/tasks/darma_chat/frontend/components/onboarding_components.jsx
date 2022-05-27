@@ -8,17 +8,28 @@
 
 import React from "react";
 import { ErrorBoundary } from './error_boundary.jsx';
-import { Checkboxes } from './checkboxes.jsx';
+import { Checkboxes, Signbox } from './inputs.jsx';
 const DEFAULT_MIN_CORRECT = 1;
 const DEFAULT_MAX_INCORRECT = 0;
-const DEFAULT_MAX_FAILURES_ALLOWED = 5;
+const DEFAULT_MAX_FAILURES_ALLOWED = 100;
 var onboardingFailuresCount = 0;
 
 var renderOnboardingFail = function () {
     // Update the UI
     document.getElementById("onboarding-submit-button").style.display = 'none';
 
-    alert('Sorry, you\'ve exceeded the maximum amount of tries to label the sample conversation correctly, and thus we don\'t believe you can complete the task correctly. Please return the HIT.')
+    alert('Sorry, you\'ve exceeded the maximum tries to complete this form completely. Please return the HIT.')
+}
+
+
+function getCurrentDate(separator='-'){
+    // reference: https://stackoverflow.com/questions/43744312/react-js-get-current-date
+    let newDate = new Date()
+    let date = newDate.getDate();
+    let month = newDate.getMonth() + 1;
+    let year = newDate.getFullYear();
+    
+    return `${year}${separator}${month<10?`0${month}`:`${month}`}${separator}${date}`
 }
 
 function arraysEqual(_arr1, _arr2) {
@@ -34,7 +45,7 @@ function arraysEqual(_arr1, _arr2) {
     return true;
 }
 
-var handleOnboardingSubmit = function ({ onboardingData, currentTurnAnnotations, onSubmit }) {
+var handleOnboardingSubmit = function ({ onboardingData, currentTurnAnnotations, signed_name, onSubmit }) {
     console.log('handleOnboardingSubmit');
     var countCorrect = 0;
     var countIncorrect = 0;
@@ -62,9 +73,14 @@ var handleOnboardingSubmit = function ({ onboardingData, currentTurnAnnotations,
     const min_correct = onboardingData.hasOwnProperty("min_correct") ? onboardingData.min_correct : DEFAULT_MIN_CORRECT;
     const max_incorrect = onboardingData.hasOwnProperty("max_incorrect") ? onboardingData.max_incorrect : DEFAULT_MAX_INCORRECT;
     const max_failures_allowed = onboardingData.hasOwnProperty("max_failures_allowed") ? onboardingData.max_failures_allowed : DEFAULT_MAX_FAILURES_ALLOWED;
-    if (countCorrect >= min_correct && countIncorrect <= max_incorrect) {
-        onSubmit({ annotations: currentTurnAnnotations, success: true });
-    } else {
+
+    if (signed_name == ""){
+        alert("You must provide your full name as the signature.")
+    }
+    else if (countCorrect >= min_correct && countIncorrect <= max_incorrect) {
+        onSubmit({ annotations: currentTurnAnnotations, success: true, signature: signed_name });
+    }     
+    else {
         if (onboardingFailuresCount < max_failures_allowed) {
             onboardingFailuresCount += 1;
             alert('If you do not agree that you have been given informed consent please do not continue with this task.');
@@ -284,6 +300,7 @@ function OnboardingQuestion({
     turnIdx, 
     annotations = null, 
     onUpdateAnnotation = null,
+    onUpdateName = null,
 }) {
     
     return (
@@ -294,7 +311,7 @@ function OnboardingQuestion({
             </h4>
             <p>
                 <b>
-                    I have read (or someone has read to me) the information provided above. I have been given a chance to ask questions. All my questions have been answered. By clicking "I agree" and submitting this form, I am agreeing to take part in this study.
+                    I have read (or someone has read to me) the information provided above. I have been given a chance to ask questions. All my questions have been answered. By signing this form, I am agreeing to take part in this study.
                 </b>
                 
                 <br/>
@@ -310,7 +327,14 @@ function OnboardingQuestion({
                         turnIdx={turnIdx} 
                         askReason={false} 
                     />
+
+                    <Signbox 
+                        onUpdateName={onUpdateName} 
+                    />
                 </ErrorBoundary>            
+                <div>
+                    Date signed: {getCurrentDate()}
+                </div>
             </p>
 
 
@@ -332,6 +356,9 @@ function OnboardingComponent({ onboardingData, annotationBuckets, annotationQues
                 Object.keys(annotationBuckets.config).map(bucket => [bucket, false]))
             )
         );
+            
+        const [signed_name, setSignedName] = React.useState("")
+
         return (
             <div id="onboarding-main-pane">
                 <OnboardingDirections/>
@@ -360,6 +387,12 @@ function OnboardingComponent({ onboardingData, annotationBuckets, annotationQues
                                                     setCurrentAnnotations(updatedAnnotations);
                                                 }
                                             }
+                                            onUpdateName={
+                                                (signature) =>{
+                                                    let newname = signature 
+                                                    setSignedName(newname)
+                                                }
+                                            }
                                             />
                                     </div>
                                 ))
@@ -375,6 +408,7 @@ function OnboardingComponent({ onboardingData, annotationBuckets, annotationQues
                         onClick={() => handleOnboardingSubmit({ 
                             onboardingData, 
                             currentTurnAnnotations,
+                            signed_name, 
                             onSubmit,
                         })}
                     >

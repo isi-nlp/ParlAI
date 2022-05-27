@@ -223,6 +223,7 @@ function CustomOnboardingChatApp({
       onboardingData={taskConfig.onboarding_data} 
       annotationBuckets={taskConfig.annotation_buckets} 
       onSubmit={(dat) => {
+        console.log(dat)
         handleMessageSend({text: '', task_data: dat});
       }} 
     />;

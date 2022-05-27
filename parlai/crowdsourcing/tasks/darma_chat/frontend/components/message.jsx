@@ -8,7 +8,7 @@
 
 import React from "react";
 
-import { Checkboxes } from './checkboxes.jsx';
+import { Checkboxes } from './inputs.jsx';
 
 function MaybeCheckboxChatMessage({ isSelf, duration, agentName, message = "", checkbox = null }) {
   const floatToSide = isSelf ? "right" : "left";
