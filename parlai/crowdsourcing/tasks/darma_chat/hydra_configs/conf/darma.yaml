@@ -6,6 +6,7 @@ defaults:
 mephisto:
   blueprint:
     chat_data_folder: ${task_dir}/model_chat/
+    consent_data_folder: ${task_dir}/consent/
     model_opt_path: ${task_dir}/task_config/darma_model_opts.yaml
     num_turns: 6 # reduced for now for testing
     task_model_parallel: true

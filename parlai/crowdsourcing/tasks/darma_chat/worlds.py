@@ -47,6 +47,7 @@ class ModelChatOnboardWorld(CrowdOnboardWorld):
     def __init__(self, opt, agent: "MephistoAgentWrapper"):
         super().__init__(opt, agent)
 
+        self.opt = opt
         self.skip_onboarding = opt['skip_onboarding']
 
         self.onboard_task_data = opt['onboard_task_data']
@@ -103,6 +104,14 @@ class ModelChatOnboardWorld(CrowdOnboardWorld):
 
             # This will end the onboarding and send them directly to the HIT
             self.episodeDone = True
+            # save informed consent details (signature and date)
+            consent_data_folder = self.opt['consent_data_folder']
+            os.makedirs(consent_data_folder, exist_ok=True)
+            consent_datapath = os.path.join(consent_data_folder, "consent_log.jsonl")
+            with open(consent_datapath, 'w+') as f_jsonl:
+                act['worker_id'] = self.worker_id
+                data_str = json.dumps(act)
+                f_jsonl.write(data_str+"\n")
             return ONBOARD_SUCCESS
         else:
             print(f'Worker {self.worker_id} failed onboarding.')
