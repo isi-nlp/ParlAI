@@ -22,7 +22,7 @@ from parlai.crowdsourcing.tasks.darma_chat.constants import (
     ONBOARD_FAIL,
     ONBOARD_SUCCESS,
 )
-from parlai.crowdsourcing.tasks.darma_chat.utils import Compatibility
+from parlai.crowdsourcing.tasks.darma_chat.utils import Compatibility, DarmaContextGenerator
 from parlai.crowdsourcing.utils.mturk import get_mturk_id_from_mephisto_wrapper
 
 from typing import TYPE_CHECKING
@@ -425,13 +425,8 @@ class ModelChatWorld(BaseModelChatWorld):
 
         if context_info is not None:
             self.context_info = context_info
-            self.personas = [
-                self.context_info['persona_1_strings'],
-                self.context_info['persona_2_strings'],
-            ]
         else:
             self.context_info = {}
-            self.personas = None
 
     def _run_initial_turn(self) -> None:
         """
@@ -444,102 +439,18 @@ class ModelChatWorld(BaseModelChatWorld):
         """
 
         control_msg = {"episode_done": False}
+        if self.opt['conversation_start_mode'] == "empty": 
+            pass
 
-        if self.opt['include_persona']:
-            # The Bot agent
-            # We add the personas and 1/3 of the time WoW topic as the
-            # first utterance in the history.
-            # Previously for BST task, we also had a big first utterance
-            # that gave instructions. Removing that for this task.
-            persona_strings = [s.strip() for s in self.personas[1]]
-            persona_utterance = self._get_persona_utterance(
-                persona_strings=persona_strings,
-                context_dataset=self.context_info['context_dataset'],
-                additional_context=self.context_info['additional_context'],
-                is_bot=True,
-            )
-            message = control_msg.copy()
-            message['text'] = persona_utterance
-            # The bot seeing its persona does not count as a "turn"
-            self.bot.observe(validate(message), increment_turn=False)
-
-        if self.opt['conversation_start_mode'] == 'blended_skill_talk':
-            print('[Displaying first utterances as per BST task.]')
-            # Display the previous two utterances
-            human_first_msg = {
-                'episode_done': False,
-                'id': self.agent.agent_id,
-                'text': self.context_info['person1_seed_utterance'],
-                'fake_start': True,
-                'agent_idx': 0,
-            }
-            for k, v in control_msg.items():
-                human_first_msg[k] = v
-            bot_first_msg = {
-                'episode_done': False,
-                'id': self.bot.agent_id,
-                'text': self.context_info['person2_seed_utterance'],
-                'fake_start': True,
-                'agent_idx': 1,
-            }
-            print(f'human_first_msg: {human_first_msg}, bot_first_msg: {bot_first_msg}')
-
-            self.dialog.append(human_first_msg)
-            self.dialog.append(bot_first_msg)
-
-            for observer in [self.agent, self.bot]:
-                observer.observe(validate(human_first_msg))
-                observer.observe(validate(bot_first_msg))
-
-        elif self.opt['conversation_start_mode'] == 'hi':
-            print('[Displaying "Hi!" only as per Meena task.]')
-            if self.personas is not None:
-                human_persona_strings = [s.strip() for s in self.personas[0]]
-            else:
-                human_persona_strings = ['', '']
-            human_first_msg = {
-                'episode_done': False,
-                'id': self.agent.agent_id,
-                'text': 'Hi!',
-                'fake_start': True,
-                'agent_idx': 0,
-                'task_data': {
-                    'human_persona_string_1': human_persona_strings[0],
-                    'human_persona_string_2': human_persona_strings[1],
-                },
-            }
-            for k, v in control_msg.items():
-                human_first_msg[k] = v
-
-            self.dialog.append(human_first_msg)
-            self.agent.observe(validate(human_first_msg))
-            self.bot.observe(validate(human_first_msg))
-
-            first_bot_act = self.bot.act()
-            first_bot_act = Compatibility.backward_compatible_force_set(
-                first_bot_act, 'id', self.bot.agent_id
-            )
-
-            self.agent.observe(validate(first_bot_act))
-
-            bot_utterance_data = {
-                'agent_idx': 1,
-                'text': first_bot_act['text'],
-                'id': first_bot_act['id'],
-            }
-            self.dialog.append(bot_utterance_data)
         elif self.opt['conversation_start_mode'] == "custom": 
             # This part is currently hardcoded until we have real data to set up the evaluation protocol 
             print("Use custom dialogue seeds to start conversations with some context")
-            if "seed_conversation_source" not in self.opt: 
-                print("You may have to add your custom opt to `shared_state.world_opt.update` in `model_chat_blueprint.py`.")
-            with open(self.opt["seed_conversation_source"], "r") as f: 
-                seed_dialogues = json.load(f)
-            
-            dialogue = random.choice(seed_dialogues)["conversation"]
+            print(f"Context info: {self.context_info}")
+
+            dialogue = self.context_info["conversation"]
 
             # make each turn in the context be from the bot except for the target user 
-            target_user = "B"
+            target_user = self.context_info["target_user"]
             for idx, turn in enumerate(dialogue): 
                 msg = {
                     'episode_done': False,
@@ -578,53 +489,7 @@ class ModelChatWorld(BaseModelChatWorld):
                 f"not recognized!"
             )
 
-    def _get_persona_utterance(
-        self,
-        persona_strings: Optional[List[str]] = None,
-        context_dataset: Optional[str] = None,
-        additional_context: Optional[str] = None,
-        is_bot: bool = False,
-    ):
-        if is_bot:
-            # Pass back the original context
-            persona_pieces = [f"your persona: {str_}" for str_ in persona_strings]
-            if context_dataset == 'wizard_of_wikipedia':
-                additional_context_pieces = [additional_context]
-            else:
-                additional_context_pieces = []
-            full_context = '\n'.join(persona_pieces + additional_context_pieces)
-            print(f'FULL CONTEXT: {full_context}')
-            return full_context
-        else:
-            if context_dataset == 'convai2':
-                last_sentence = 'Pretend that the conversation has already begun.'
-            elif context_dataset == 'empathetic_dialogues':
-                last_sentence = (
-                    f'Pretend that the conversation has already begun, and that you '
-                    f'had been talking about the following situation: '
-                    f'<b>"{additional_context}"</b>'
-                )
-            elif context_dataset == 'wizard_of_wikipedia':
-                last_sentence = (
-                    f'Pretend that the conversation has already begun, and that you '
-                    f'had been talking about <b>{additional_context}</b>.'
-                )
-            else:
-                raise ValueError('Context dataset unrecognized!')
-            joined_personas = '\n'.join(persona_strings)
-            return (
-                f'\nSuccessfully matched with another user! Now let\'s get to know '
-                f'each other through the chat. You need to finish at least '
-                f'<b>{self.num_turns} chat turns</b>, and after that you can click the '
-                f'"Done" button to end the chat.\n\n'
-                f'<b>Your character description is:\n<span style="color:blue">{joined_personas}</span></b> '
-                '\n\n<b>Remember that you can get to know each '
-                'other as your characters, talk about any topic, or talk about a '
-                'situation that might have happened to your character.</b>'
-                '\n<b>Do not trivially copy the '
-                'character descriptions into the message.</b><br><br>'
-                f'{last_sentence}'
-            )
+
 
     def get_final_chat_data(self) -> Dict[str, Any]:
         """
@@ -632,7 +497,6 @@ class ModelChatWorld(BaseModelChatWorld):
         """
         data = super().get_final_chat_data()
         context_data = {
-            'personas': self.personas,
             'context_dataset': self.context_info.get('context_dataset'),
             'person1_seed_utterance': self.context_info.get('person1_seed_utterance'),
             'person2_seed_utterance': self.context_info.get('person2_seed_utterance'),
@@ -703,7 +567,8 @@ def make_world(opt, agents):
 
     # Get context: personas, previous utterances, etc.
     if context_generator is not None:
-        context_info = context_generator.get_context()
+        context_info = context_generator.get_context(DarmaContextGenerator.idx)
+        DarmaContextGenerator.idx += 1 
     else:
         context_info = None
 

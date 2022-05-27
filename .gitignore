@@ -152,4 +152,4 @@ crowdsourcing/**/package-lock.json
 
 # our own 
 parlai/crowdsourcing/tasks/darma_chat/model_chat/
-
+parlai/crowdsourcing/tasks/darma_chat/consent/

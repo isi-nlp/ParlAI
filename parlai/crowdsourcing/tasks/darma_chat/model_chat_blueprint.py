@@ -28,6 +28,7 @@ from omegaconf import DictConfig, MISSING
 from parlai.crowdsourcing.tasks.darma_chat.bot_agent import TurkLikeAgent
 from parlai.crowdsourcing.tasks.darma_chat.utils import (
     get_context_generator,
+    DarmaContextGenerator
 )
 from parlai.tasks.blended_skill_talk.agents import ContextGenerator
 
@@ -48,7 +49,6 @@ class SharedBaseModelChatTaskState(SharedParlAITaskState):
     """
 
     shared_models: Dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass
 class SharedModelChatTaskState(SharedBaseModelChatTaskState):
@@ -322,9 +322,6 @@ class ModelChatBlueprintArgs(BaseModelChatBlueprintArgs):
             "help": "path to json file that contains the conversation seeds"
         }
     )
-    include_persona: bool = field(
-        default=False, metadata={"help": "Show persona to the bot"}
-    )
     conversations_needed_string: str = field(
         default=MISSING,
         metadata={
@@ -393,6 +390,7 @@ class ModelChatBlueprint(BaseModelChatBlueprint):
         else:
             conversations_needed = shared_state.conversations_needed
         args.blueprint.num_conversations = sum(conversations_needed.values())
+
         super().assert_task_args(args=args, shared_state=shared_state)
 
         if args.blueprint.get(
@@ -416,7 +414,12 @@ class ModelChatBlueprint(BaseModelChatBlueprint):
         conversations_needed = self._process_conversations_needed(args)
         self.conversations_needed = conversations_needed
         shared_state.conversations_needed = conversations_needed
-        args.blueprint.num_conversations = sum(conversations_needed.values())
+
+        with open(args.blueprint.seed_conversation_source, "r") as f: 
+            seed_dialogues = json.load(f) 
+
+        args.blueprint.num_conversations = len(seed_dialogues) 
+        # args.blueprint.num_conversations = sum(conversations_needed.values())
 
         super().__init__(task_run=task_run, args=args, shared_state=shared_state)
 
@@ -437,19 +440,17 @@ class ModelChatBlueprint(BaseModelChatBlueprint):
         shared_state.run_statistics = run_statistics
 
         if (
-            args.blueprint.include_persona
-            # 'hi' mode does not use a context generator and instead just displays "Hi!"
-            # at the start of the conversation
-            or args.blueprint.conversation_start_mode != 'hi'
+            args.blueprint.conversation_start_mode != 'hi'
         ):
             if args.blueprint.conversation_start_mode in ['hi', 'custom']:
                 # Default to using the context from BlendedSkillTalk
                 task = 'blended_skill_talk'
             else:
                 task = args.blueprint.conversation_start_mode
-            context_generator = get_context_generator(
-                override_opt=args.blueprint.override_opt, task=task
-            )
+            # context_generator = get_context_generator(
+            #     override_opt=args.blueprint.override_opt, task=task
+            # )
+            context_generator = DarmaContextGenerator(args.blueprint)
         else:
             context_generator: Optional[ContextGenerator] = None
         shared_state.context_generator = context_generator
@@ -478,7 +479,6 @@ class ModelChatBlueprint(BaseModelChatBlueprint):
                 'statistics_condition': statistics_condition,
                 'conversation_start_mode': args.blueprint.conversation_start_mode,
                 'seed_conversation_source': args.blueprint.seed_conversation_source,
-                'include_persona': args.blueprint.include_persona,
             }
         )
 
