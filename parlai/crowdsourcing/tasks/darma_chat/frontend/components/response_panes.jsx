@@ -59,7 +59,8 @@ function RatingSelector({ active, ratings, sending, ratingQuestion, ratingIndex,
           style={{ fontSize: "14px" }}
           value={ratings[ratingIndex]}
           onChange={(e) => handleRatingSelection(e.target.value)}
-          disabled={!active || sending}
+          // disabled={!active || sending}
+          disabled={sending}
         >
           {ratingOptions}
         </FormControl>
@@ -87,7 +88,8 @@ function FinalSurvey({ taskConfig, onMessageSend, active, currentCheckboxes }) {
     let all_ratings_filled = ratings.every((r) => r !== "");
     let rating = ratings.join('|');
 
-    if (all_ratings_filled && active && !sending) {
+    // if (all_ratings_filled && active && !sending) {
+    if (all_ratings_filled && !sending) {
       setSending(true);
       onMessageSend({
         text: "",
@@ -130,7 +132,8 @@ function FinalSurvey({ taskConfig, onMessageSend, active, currentCheckboxes }) {
           <Button
             className="btn btn-submit submit-response"
             id="id_send_msg_button"
-            disabled={!active || sending}
+            // disabled={!active || sending}
+            disabled={sending}
             onClick={() => tryMessageSend()}
           >
             Submit
@@ -151,7 +154,8 @@ function FinalSurvey({ taskConfig, onMessageSend, active, currentCheckboxes }) {
           <Button
             className="btn btn-submit submit-response"
             id="id_send_msg_button"
-            disabled={!active || sending}
+            // disabled={!active || sending}
+            disabled={sending}
             onClick={() => tryMessageSend()}
           >
             Submit
@@ -175,7 +179,8 @@ function CheckboxTextResponse({ onMessageSend, active, currentCheckboxes }) {
   }, [active]);
 
   const tryMessageSend = React.useCallback(() => {
-    if (textValue !== "" && active && !sending) {
+    // if (textValue !== "" && active && !sending) {
+    if (textValue !== "" && !sending) {
       setSending(true);
       onMessageSend({
         text: textValue,
@@ -211,12 +216,14 @@ function CheckboxTextResponse({ onMessageSend, active, currentCheckboxes }) {
           placeholder="Please enter here..."
           onKeyPress={(e) => handleKeyPress(e)}
           onChange={(e) => setTextValue(e.target.value)}
-          disabled={!active || sending}
+          // disabled={!active || sending}
+          disabled={sending}
         />
         <Button
           className="btn btn-primary submit-response"
           id="id_send_msg_button"
-          disabled={textValue === "" || !active || sending}
+          // disabled={textValue === "" || !active || sending}
+          disabled={textValue === "" || sending}
           onClick={() => tryMessageSend()}
         >
           Send
@@ -235,6 +242,8 @@ function ResponseComponent({ taskConfig, appSettings, onMessageSend, active }) {
     taskConfig.annotation_buckets === null ||
     hasAnyAnnotations(lastMessageAnnotations) & active
   );
+
+  // const computedActive = true 
 
   if (lastMessageIdx >= taskConfig.min_num_turns * 2) {
     return (

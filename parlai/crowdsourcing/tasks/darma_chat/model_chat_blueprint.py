@@ -27,7 +27,6 @@ from omegaconf import DictConfig, MISSING
 
 from parlai.crowdsourcing.tasks.darma_chat.bot_agent import TurkLikeAgent
 from parlai.crowdsourcing.tasks.darma_chat.utils import (
-    ImageStack,
     get_context_generator,
 )
 from parlai.tasks.blended_skill_talk.agents import ContextGenerator
@@ -95,6 +94,10 @@ class BaseModelChatBlueprintArgs(ParlAIChatBlueprintArgs):
     chat_data_folder: str = field(
         default=MISSING,
         metadata={"help": "Folder in which to save collected conversation data"},
+    )
+    consent_data_folder: str = field(
+        default=MISSING,
+        metadata={"help": "Folder in which to save informed consent information"},
     )
     check_acceptability: bool = field(
         default=False,
@@ -190,6 +193,8 @@ class BaseModelChatBlueprint(ParlAIChatBlueprint, ABC):
             f'"~" can\'t currently be parsed in the chat data folder path '
             f'{args.blueprint.chat_data_folder}'
         )
+        if args.blueprint.get("consent_data_folder") == '':
+            raise ValueError('Must provide a valid consent data folder')
         # Currently Hydra overrides the tilde key at lower levels as described here: https://hydra.cc/docs/next/advanced/override_grammar/basic/#grammar
         # Thus the TILDE key cannot be used in replacement for $HOME variable
         # Some hacky solution can probably be achieved but won't be good code so for now this assert is written as a placeholder
@@ -232,7 +237,10 @@ class BaseModelChatBlueprint(ParlAIChatBlueprint, ABC):
 
         # Move shared state into the world opt, so that it can be used by the world
         shared_state.onboarding_world_opt.update(
-            {'skip_onboarding': self.annotations_config is None}
+            {
+                'skip_onboarding': self.annotations_config is None,
+                'consent_data_folder': args.blueprint.consent_data_folder
+            }
         )
         # The onboarding checks how well workers annotate conversations, so it should be
         # skipped if we are not annotating
@@ -247,6 +255,7 @@ class BaseModelChatBlueprint(ParlAIChatBlueprint, ABC):
                 'is_sandbox': args.provider.requester_name == 'MOCK_REQUESTER',
                 'check_acceptability': args.blueprint.check_acceptability,
                 'chat_data_folder': args.blueprint.chat_data_folder,
+                'consent_data_folder': args.blueprint.consent_data_folder,
             }
         )
 

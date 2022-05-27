@@ -8,7 +8,7 @@
                 "episode_done": false
             },
             {
-                "text": "Do you agree to the informed consent?",
+                "text": "Do you agree with the informed consent?",
                 "agent_idx": 0,
                 "episode_done": false,
                 "id": "model",

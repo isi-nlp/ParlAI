@@ -8,6 +8,38 @@
 
 import React from "react";
 
+
+function Signbox({
+  onUpdateName,
+  placeholder_text="Full Name of Research Participant"
+}){
+
+  return (
+    <div>
+      {/* <textarea name="signature" id="signature_box" cols="30" rows="1" placeholder={placeholder_text}></textarea> */}
+      <input 
+        name="signature" 
+        id="signature_box" 
+        placeholder={placeholder_text} 
+        type="text"
+        onChange={(evt) => {
+          let newVal = evt.target.value;
+          onUpdateName(newVal);
+        }}
+        style={{
+          border: 'none',
+          borderBottom: '2px solid black',
+          width: "100%",
+          padding: "12px 20px",
+          margin: "8px 0",
+          boxSizing: "border-box"
+        }}
+      />
+
+    </div>
+  )
+}
+
 function Checkboxes({
   annotationBuckets,
   turnIdx,
@@ -21,7 +53,8 @@ function Checkboxes({
       <br></br>
       <div>
         <div>Why did you select the checkboxes you did?</div>
-        <input type="text" id={'input_reason_' + turnIdx} style={{ minWidth: '50%' }} />
+        <input 
+          type="text" id={'input_reason_' + turnIdx} style={{ minWidth: '50%' }} />
       </div>
     </div>
   )
@@ -29,7 +62,8 @@ function Checkboxes({
     reasonComponent = '';
   }
   // TODO: add support for radio input type
-  let input_type = "checkbox";
+  // let input_type = "checkbox";
+  let input_type = "radio";
   const showLineBreaks = annotationBuckets.hasOwnProperty("show_line_breaks") ? annotationBuckets.show_line_breaks : false;
   const numBuckets = Object.keys(annotationBuckets.config).length;
   return (
@@ -44,8 +78,20 @@ function Checkboxes({
                 name={'checkbox_group_' + turnIdx}
                 onChange={(evt) => {
                   let newVal = evt.target.checked;
+                  console.log(newVal)
                   let oldAnnotations = Object.assign({}, annotations);
                   oldAnnotations[c] = newVal;
+                  // hack: set all others as false for radio input type 
+                  if (input_type == "radio"){
+                    for (var i = 0; i < numBuckets; i++) {
+                      let k = Object.keys(annotationBuckets.config)[i]
+                      if (k==c){
+                        continue 
+                      }
+                      oldAnnotations[k] = false 
+                    } 
+                  }
+                  console.log(oldAnnotations)
                   onUpdateAnnotations(oldAnnotations);
                 }}
                 disabled={!enabled}
@@ -65,5 +111,5 @@ function Checkboxes({
 }
 // showLineBreaks: show a line break after every checkbox other than the final one
 
-export { Checkboxes };
+export { Checkboxes, Signbox };
 
