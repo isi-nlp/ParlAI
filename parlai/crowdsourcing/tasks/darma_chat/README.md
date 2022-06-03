@@ -1,40 +1,56 @@
-# DARMA model chat 
+# DARMA Model Chat
+
+## Overview
 
 Main command: `python run.py`
-This will use the default configuration of `conf=darma` 
+This is equivalent to `python run.py conf=darma`, which will run crowdsourcing tasks on the local server. Use `python run.py conf=mturk_sandbox` to run the tasks on a heroku server that was set up with https://mephisto.ai/docs/guides/quickstart/ and publish them on Mechanical Turk. 
 
-- Baseline setup: `python run.py conf=example`. 
-- Refer to https://github.com/facebookresearch/ParlAI/tree/main/model_chat
+This task is adapted from `https://github.com/isi-nlp/ParlAI/tree/main/parlai/crowdsourcing/tasks/model_chat` and therefore there may be a number of unnecessary artifacts from this task that remain in this script. 
+
+## Contributing:  
+
+  1. set up environment: `conda create -n darma python=3.8`; `conda activate darma`
+  2. go to ParlAI main directory (i.e. `cd ~/ParlAI`) and install ParlAI in development mode `pip3 install -e . `
+  3. Make sure Mephisto is set up properly following these steps: https://mephisto.ai/docs/guides/quickstart/ 
+  4. Publish tasks `cd parlai/crowdsourcing/tasks/darma_chat/; python run.py` and follow the instructions from the terminal to access the tasks. 
+  5. If there is bug, quit the process, make edits to the relevant scripts, and repeat step 4. 
+  6. Repeat steps 4 & 5 until there are no bugs. 
+
+Issue tracking: https://github.com/isi-nlp/isi_darma/issues 
 
 ## General tips 
 
 If you don't know where to start, run the baseline example with `python run.py conf=example` and see in the terminal all the parameters that were used for this run. Most of these parameters are well-explained in `model_chat_blueprint.py`. 
 
 
+
 ### Frontend Customizations
 
 Here, we map frontend customizations and the corresponding scripts that need to be modified. 
-- left pane instructions: 
-  - `task_config/darma_task_description.html`
-- task description: 
-  - `task_config/darma_left_pane_text.html`
-- title: 
-  - simply update `task_title` in `darma.yaml`
-- Post-conversation survey: 
-  - Selection choices: 
-    - `parlai/crowdsourcing/tasks/darma_chat/frontend/components/response_panes.jsx` under `function RatingSelector`
-  - Survey questions: 
-    - set `final_rating_question` with your question. For multiple questions, separate them by "|" in a single string. 
+- Main script that contains all the components: `frontend/components/chat_app_with_onboarding.jsx`
 - Onboarding task (informed consent form): 
+  - Informed consent form content: `frontend/components/onboarding_components.jsx` under `<OnboardingDirections>`
   - Update configuration in `darma.yaml`
     - onboard_task_data_path: `${task_dir}/task_config/darma_onboard_task_data.json`
     - annotations_config_path:`${task_dir}/task_config/darma_annotations_config.json`
-  - Description: 
-    - `frontend/components/onboarding_components.jsx` under `<OnboardingDirections>` 
-  - Checkbox: 
-    - Specify onboarding questions and onboarding requirement: `task_config/darma_onboard_task_data.json`
+  - Inputs (radio input and text input): 
+    - modify frontend: `frontend/components/inputs.jsx`
     - Answer choices: `task_config/darma_annotations_config.json`
-  - TODO: import from `task_config/informed_consent.html` to keep code more organized. 
+- Main task 
+  - left pane instructions: 
+    - `task_config/darma_task_description.html`
+  - task description: 
+    - `task_config/darma_left_pane_text.html`
+  - title: 
+    - simply update `task_title` in `darma.yaml`
+  - message box: `frontend/components/message.jsx`
+  - Post-conversation survey: 
+    - Selection choices: 
+      - `parlai/crowdsourcing/tasks/darma_chat/frontend/components/response_panes.jsx` under `function RatingSelector`
+    - Survey questions: 
+      - set `final_rating_question` with your question. For multiple questions, separate them by "|" in a single string. 
+
+  
 
 ## Seed conversation customizations 
 
@@ -44,7 +60,13 @@ Here, we map frontend customizations and the corresponding scripts that need to 
 ## Model customization
 
 - Specify the model to chat with in `task_config/darma_model_opts`
-  - choose either a model that is hosted by ParlAI or provide a path to a model that has been trained locally with ParlAI. 
+  - choose either a model that is hosted by ParlAI (list can be found [here](https://parl.ai/docs/zoo.html)) or provide a path to a model that has been trained locally with ParlAI. 
+
+- Model conversation logic can be modified in the `ModelChatWorld` class inside `worlds.py` 
+  - Conversation context: 
+    -  `DarmaContextGenerator` inside `utils.py` is responsible for loading the seed conversation data (context info), which is supplied to the `_run_initial_turn()` method. 
+    -  A static variable keeps track of the index. 
+    -  Currently, only one assignment is created for a single conversation seed.  
 
 ## Debug logs/tips 
 

@@ -450,7 +450,6 @@ class ModelChatWorld(BaseModelChatWorld):
             pass
 
         elif self.opt['conversation_start_mode'] == "custom": 
-            # This part is currently hardcoded until we have real data to set up the evaluation protocol 
             print("Use custom dialogue seeds to start conversations with some context")
             print(f"Context info: {self.context_info}")
 
