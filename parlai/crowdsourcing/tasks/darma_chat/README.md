@@ -9,12 +9,20 @@ This task is adapted from `https://github.com/isi-nlp/ParlAI/tree/main/parlai/cr
 
 ## Contributing:  
 
-  1. set up environment: `conda create -n darma python=3.8`; `conda activate darma`
-  2. go to ParlAI main directory (i.e. `cd ~/ParlAI`) and install ParlAI in development mode `pip3 install -e . `
-  3. Make sure Mephisto is set up properly following these steps: https://mephisto.ai/docs/guides/quickstart/ 
-  4. Publish tasks `cd parlai/crowdsourcing/tasks/darma_chat/; python run.py` and follow the instructions from the terminal to access the tasks. 
-  5. If there is bug, quit the process, make edits to the relevant scripts, and repeat step 4. 
-  6. Repeat steps 4 & 5 until there are no bugs. 
+  1. Set up environment: `conda create -n darma python=3.8`; `conda activate darma`
+  2. Make sure Mephisto is set up properly following these steps: https://mephisto.ai/docs/guides/quickstart/ 
+  3. Go to ParlAI main directory (i.e. `cd ~/ParlAI`) and install ParlAI in development mode `pip3 install -e . `
+  4. Go back to the Mephisto directory and install all the required packages: `pip install -r requirements.txt`
+  5. Manually install the pip incompatibilities for Mephisto by running the following command
+  ```
+  pip3 install zipp==3.1.0
+  pip3 install importlib-metadata==1.6.0
+  pip3 install atomicwrites==1.3.0
+  pip3 install colorama==0.4.3
+  ```
+  6. Publish tasks `cd parlai/crowdsourcing/tasks/darma_chat/; python run.py` and follow the instructions from the terminal to access the tasks. 
+  7. If there is bug, quit the process, make edits to the relevant scripts, and repeat step 4. 
+  8. Repeat steps 4 & 5 until there are no bugs. 
 
 Issue tracking: https://github.com/isi-nlp/isi_darma/issues 
 
