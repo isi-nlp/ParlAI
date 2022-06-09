@@ -39,15 +39,6 @@ function MainApp() {
               )
           }
         >
-          {(taskContext.hasOwnProperty('image_src') && taskContext['image_src']) ? (
-            <div>
-              <h4>Conversation image:</h4>
-              <span id="image">
-                <img src={taskContext.image_src} alt='Image'/>
-              </span>
-              <br />
-            </div>
-          ) : null}
         </DefaultTaskDescription>
       )}
       renderTextResponse={
