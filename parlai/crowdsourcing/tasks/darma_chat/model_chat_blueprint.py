@@ -256,6 +256,7 @@ class BaseModelChatBlueprint(ParlAIChatBlueprint, ABC):
                 'check_acceptability': args.blueprint.check_acceptability,
                 'chat_data_folder': args.blueprint.chat_data_folder,
                 'consent_data_folder': args.blueprint.consent_data_folder,
+                'translator': args.blueprint.translator if 'translator' in args.blueprint else None,
             }
         )
 
@@ -342,6 +343,10 @@ class ModelChatBlueprintArgs(BaseModelChatBlueprintArgs):
         metadata={"help": "Path to file containing parlai world"},
     )
 
+    translator: Dict[str, Any] = field(
+        default_factory=dict,
+        metadata = {"help": "settings to enable machine translation integration"}
+    )
 
 @register_mephisto_abstraction()
 class ModelChatBlueprint(BaseModelChatBlueprint):

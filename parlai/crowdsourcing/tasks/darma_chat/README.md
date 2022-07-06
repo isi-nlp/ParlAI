@@ -14,7 +14,7 @@ This task is adapted from `https://github.com/isi-nlp/ParlAI/tree/main/parlai/cr
   3. Go to ParlAI main directory (i.e. `cd ~/ParlAI`) and install ParlAI in development mode `pip3 install -e . `
   4. Go back to the Mephisto directory and install all the required packages: `pip install -r requirements.txt`
   5. Manually install the pip incompatibilities for Mephisto by running the following command
-  ```
+  ```bash
   pip3 install zipp==3.1.0
   pip3 install importlib-metadata==1.6.0
   pip3 install atomicwrites==1.3.0
@@ -75,6 +75,39 @@ Here, we map frontend customizations and the corresponding scripts that need to 
     -  `DarmaContextGenerator` inside `utils.py` is responsible for loading the seed conversation data (context info), which is supplied to the `_run_initial_turn()` method. 
     -  A static variable keeps track of the index. 
     -  Currently, only one assignment is created for a single conversation seed.  
+
+## Enabling MT
+
+> see `translator.py` for the code
+
+Add this config block as `mephisto.blueprint.translator`
+
+```yaml
+translator:
+  activation: 'pre' # pre, post, pre+post, null
+  preprocess: rtg_api
+  preprocess_args:
+    # TODO: change the URL to DARMA hosted service
+    api_url: http://rtg.isi.edu/many-eng/v1/translate
+  postprocess: huggingface
+  postprocess_args:
+    model: Helsinki-NLP/opus-mt-en-fr
+```
+The key `activation` takes the following values 
+* `pre` - Only translate human input (via `preprocess` config)
+* `post` - Only translate bot output (via `postprocess` config)
+* `pre+post` - Enable both `pre` and `post` 
+* `null` - Disable MT. Which has same effect as deleting the whole `translator` config block
+
+`preprocess` and `postprocess` takes the MT backend __name__.
+Whereas `{pre,post}process_args` take a dictionary of arguments to MT backend.
+
+__The following MT backends are supported__
+* `rtg_api` which calls RTG over a REST API. See http://rtg.isi.edu/many-eng/ 
+* `huggingface` calls `transformers` library. Requires `model` argument which can be obtained from https://huggingface.co/models?pipeline_tag=translation
+
+
+
 
 ## Debug logs/tips 
 
