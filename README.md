@@ -1,3 +1,9 @@
+🛑STOP🛑: This repository has been archived (no longer in use). 
+
+Darma Chat development is moved to https://github.com/isi-nlp/isi_darma/tree/main/darma_chat 
+
+
+--------------------
 <p align="center">
  <img width="70%" src="docs/source/\_static/img/parlai.png" />
 </p>
